@@ -1,0 +1,668 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Header from "../components/Header";
+import {
+  deleteAdminAppointment,
+  getAdminMe,
+  getAdminMonthSummary,
+  getAdminSchedule,
+  updateAdminAppointment,
+  getAdminAuditLogs,
+  getAdminClients,
+  getAdminClientAppointments,
+  type AdminAppointment,
+  type AdminAuditLog,
+  type AdminClientSummary,
+  type AdminClientAppointment,
+} from "../services/adminApi";
+
+type AdminTab = "agenda" | "historico" | "clientes";
+
+function formatDuration(totalMinutes: number) {
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  if (h > 0 && m > 0) return `${h}h ${m}min`;
+  if (h > 0) return `${h}h`;
+  return `${m}min`;
+}
+
+function buildCalendarCells(month: string) {
+  const [year, monthNum] = month.split("-").map(Number);
+  const firstDay = new Date(year, monthNum - 1, 1);
+  const lastDay = new Date(year, monthNum, 0).getDate();
+
+  const leadingEmpty = firstDay.getDay();
+  const cells: (string | null)[] = [];
+
+  for (let i = 0; i < leadingEmpty; i++) cells.push(null);
+  for (let day = 1; day <= lastDay; day++) {
+    cells.push(`${month}-${String(day).padStart(2, "0")}`);
+  }
+
+  return cells;
+}
+
+function todayISO() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+export default function Admin() {
+  const navigate = useNavigate();
+
+  const initialDate = todayISO();
+  const [tab, setTab] = useState<AdminTab>("agenda");
+
+  const [selectedDate, setSelectedDate] = useState(initialDate);
+  const [selectedMonth, setSelectedMonth] = useState(initialDate.slice(0, 7));
+
+  const [barberName, setBarberName] = useState("Barbeiro");
+  const [dailyAppointments, setDailyAppointments] = useState<AdminAppointment[]>([]);
+  const [monthCounts, setMonthCounts] = useState<Record<string, number>>({});
+
+  const [loadingDay, setLoadingDay] = useState(true);
+  const [loadingMonth, setLoadingMonth] = useState(true);
+  const [globalError, setGlobalError] = useState("");
+
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
+  const [editTime, setEditTime] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Histórico
+  const [logs, setLogs] = useState<AdminAuditLog[]>([]);
+  const [loadingLogs, setLoadingLogs] = useState(false);
+
+  // Clientes
+  const [clients, setClients] = useState<AdminClientSummary[]>([]);
+  const [loadingClients, setLoadingClients] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
+  const [clientAppointments, setClientAppointments] = useState<AdminClientAppointment[]>([]);
+  const [loadingClientAppointments, setLoadingClientAppointments] = useState(false);
+
+  const calendarCells = useMemo(() => buildCalendarCells(selectedMonth), [selectedMonth]);
+
+  async function loadAdminMe() {
+    const me = await getAdminMe();
+    setBarberName(me.barberName || "Barbeiro");
+  }
+
+  async function loadDay(date: string) {
+    setLoadingDay(true);
+    setGlobalError("");
+    try {
+      const data = await getAdminSchedule(date);
+      setDailyAppointments(data.appointments || []);
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao carregar agenda do dia.");
+    } finally {
+      setLoadingDay(false);
+    }
+  }
+
+  async function loadMonth(month: string) {
+    setLoadingMonth(true);
+    setGlobalError("");
+    try {
+      const data = await getAdminMonthSummary(month);
+      const map: Record<string, number> = {};
+      for (const item of data.days || []) map[item.date] = item.count;
+      setMonthCounts(map);
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao carregar calendário mensal.");
+    } finally {
+      setLoadingMonth(false);
+    }
+  }
+
+  async function loadLogs() {
+    setLoadingLogs(true);
+    setGlobalError("");
+    try {
+      const data = await getAdminAuditLogs({ limit: 100 });
+      setLogs(data.items || []);
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao carregar histórico.");
+    } finally {
+      setLoadingLogs(false);
+    }
+  }
+
+  async function loadClients() {
+    setLoadingClients(true);
+    setGlobalError("");
+    try {
+      const data = await getAdminClients({ limit: 300 });
+      setClients(data.items || []);
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao carregar clientes.");
+    } finally {
+      setLoadingClients(false);
+    }
+  }
+
+  async function loadClientAppointments(userId: string) {
+    setLoadingClientAppointments(true);
+    setGlobalError("");
+    try {
+      const data = await getAdminClientAppointments(userId);
+      setClientAppointments(data.items || []);
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao carregar agendamentos do cliente.");
+    } finally {
+      setLoadingClientAppointments(false);
+    }
+  }
+
+  useEffect(() => {
+    loadAdminMe().catch((err) => {
+      setGlobalError(err?.message || "Falha ao carregar dados do administrador.");
+    });
+  }, []);
+
+  useEffect(() => {
+    if (tab !== "agenda") return;
+    loadDay(selectedDate);
+  }, [selectedDate, tab]);
+
+  useEffect(() => {
+    if (tab !== "agenda") return;
+    loadMonth(selectedMonth);
+  }, [selectedMonth, tab]);
+
+  useEffect(() => {
+    if (tab === "historico") loadLogs();
+    if (tab === "clientes") loadClients();
+  }, [tab]);
+
+  function openEdit(appt: AdminAppointment) {
+    setEditingId(appt.id);
+    setEditDate(appt.date);
+    setEditTime(appt.time);
+  }
+
+  async function saveEdit() {
+    if (!editingId || !editDate || !editTime) return;
+
+    setSavingEdit(true);
+    setGlobalError("");
+
+    try {
+      await updateAdminAppointment(editingId, {
+        date: editDate,
+        time: editTime,
+      });
+
+      setEditingId(null);
+
+      if (editDate !== selectedDate) {
+        setSelectedDate(editDate);
+      } else {
+        await loadDay(selectedDate);
+      }
+
+      await loadMonth(selectedMonth);
+      await loadLogs();
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao salvar alteração.");
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function removeAppointment(id: string) {
+    const ok = window.confirm("Deseja excluir este agendamento?");
+    if (!ok) return;
+
+    setDeletingId(id);
+    setGlobalError("");
+
+    try {
+      await deleteAdminAppointment(id);
+      await loadDay(selectedDate);
+      await loadMonth(selectedMonth);
+      await loadLogs();
+    } catch (err: any) {
+      setGlobalError(err?.message || "Erro ao excluir agendamento.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const weekLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  function renderAgenda() {
+    return (
+      <>
+        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Agenda do dia</h2>
+            <input
+              type="date"
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div className="mt-5">
+            {loadingDay ? (
+              <p className="text-gray-600 dark:text-gray-400">Carregando agenda...</p>
+            ) : dailyAppointments.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400">Nenhum atendimento neste dia.</p>
+            ) : (
+              <div className="space-y-4">
+                {dailyAppointments.map((appt) => (
+                  <article
+                    key={appt.id}
+                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Horário</p>
+                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{appt.time}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
+                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {appt.client.name || appt.client.email || "Cliente"}
+                        </p>
+                        {appt.client.email && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{appt.client.email}</p>
+                        )}
+                        {appt.client.phone && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Tel: {appt.client.phone}</p>
+                        )}
+                      </div>
+
+                      <div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Duração total</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          {formatDuration(appt.totalDuration)}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4">
+                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Serviços</p>
+                      <ul className="space-y-1">
+                        {appt.items.map((item, idx) => (
+                          <li key={`${appt.id}-${item.serviceId}-${idx}`} className="text-sm text-gray-700 dark:text-gray-300">
+                            {item.qty}x {item.serviceName} — {item.duration}min cada
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {appt.notes && (
+                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                        Observações: {appt.notes}
+                      </p>
+                    )}
+
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => openEdit(appt)}
+                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Alterar horário
+                      </button>
+
+                      <button
+                        onClick={() => removeAppointment(appt.id)}
+                        disabled={deletingId === appt.id}
+                        className="rounded-lg px-3 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-500 disabled:opacity-60"
+                      >
+                        {deletingId === appt.id ? "Excluindo..." : "Excluir"}
+                      </button>
+                    </div>
+
+                    {editingId === appt.id && (
+                      <div className="mt-4 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
+                        <p className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">Editar agendamento</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <input
+                            type="date"
+                            value={editDate}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                          />
+                          <input
+                            type="time"
+                            value={editTime}
+                            onChange={(e) => setEditTime(e.target.value)}
+                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                          />
+                        </div>
+                        <div className="mt-3 flex gap-2">
+                          <button
+                            onClick={saveEdit}
+                            disabled={savingEdit}
+                            className="rounded-lg px-3 py-2 text-sm font-semibold bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 disabled:opacity-60"
+                          >
+                            {savingEdit ? "Salvando..." : "Salvar"}
+                          </button>
+                          <button
+                            onClick={() => setEditingId(null)}
+                            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Calendário mensal</h2>
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+            />
+          </div>
+
+          {loadingMonth ? (
+            <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando calendário...</p>
+          ) : (
+            <div className="mt-4">
+              <div className="grid grid-cols-7 gap-2 mb-2">
+                {weekLabels.map((w) => (
+                  <div key={w} className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center py-1">
+                    {w}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-2">
+                {calendarCells.map((date, idx) => {
+                  if (!date) return <div key={`empty-${idx}`} className="h-20 rounded-lg bg-transparent" />;
+
+                  const day = Number(date.slice(-2));
+                  const count = monthCounts[date] || 0;
+                  const selected = date === selectedDate;
+
+                  return (
+                    <button
+                      key={date}
+                      onClick={() => setSelectedDate(date)}
+                      className={[
+                        "h-20 rounded-lg border p-2 text-left transition",
+                        selected
+                          ? "border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-700"
+                          : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{day}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-300">{count}</span>
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        {count === 1 ? "1 atendimento" : `${count} atendimentos`}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      </>
+    );
+  }
+
+  function renderHistorico() {
+    return (
+      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Histórico de alterações</h2>
+          <button
+            onClick={loadLogs}
+            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            Atualizar
+          </button>
+        </div>
+
+        {loadingLogs ? (
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando histórico...</p>
+        ) : logs.length === 0 ? (
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Sem eventos registrados.</p>
+        ) : (
+          <div className="mt-4 space-y-3">
+            {logs.map((log) => {
+              const before = log.before_data || {};
+              const after = log.after_data || null;
+              const clientName = before?.client?.name || before?.client?.email || "Cliente";
+              const services = Array.isArray(before?.items)
+                ? before.items.map((i: any) => `${i.qty}x ${i.serviceName}`).join(", ")
+                : "-";
+
+              return (
+                <article
+                  key={log.id}
+                  className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={[
+                          "text-xs font-bold px-2 py-1 rounded",
+                          log.action === "DELETE_APPOINTMENT"
+                            ? "bg-red-600 text-white"
+                            : "bg-amber-500 text-gray-900",
+                        ].join(" ")}
+                      >
+                        {log.action === "DELETE_APPOINTMENT" ? "EXCLUSÃO" : "ALTERAÇÃO"}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300">
+                        {new Date(log.created_at).toLocaleString("pt-BR")}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                      Barbeiro: <strong>{log.actor_name || log.actor_email}</strong>
+                    </p>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Cliente: <strong>{clientName}</strong>
+                    </p>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Horário anterior:{" "}
+                      <strong>
+                        {before?.date || "-"} {before?.time || ""}
+                      </strong>
+                    </p>
+
+                    {after ? (
+                      <p className="text-gray-700 dark:text-gray-300">
+                        Horário novo: <strong>{after?.date || "-"} {after?.time || ""}</strong>
+                      </p>
+                    ) : (
+                      <p className="text-gray-700 dark:text-gray-300">
+                        Horário novo: <strong>— (agendamento removido)</strong>
+                      </p>
+                    )}
+
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Serviços: <strong>{services || "-"}</strong>
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </section>
+    );
+  }
+
+  function renderClientes() {
+    const selectedClient = clients.find((c) => c.userId === selectedClientId) || null;
+
+    return (
+      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Banco de clientes</h2>
+          <button
+            onClick={loadClients}
+            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+          >
+            Atualizar
+          </button>
+        </div>
+
+        <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            {loadingClients ? (
+              <p className="text-gray-600 dark:text-gray-400">Carregando clientes...</p>
+            ) : clients.length === 0 ? (
+              <p className="text-gray-600 dark:text-gray-400">Nenhum cliente encontrado.</p>
+            ) : (
+              <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
+                {clients.map((c) => (
+                  <button
+                    key={c.userId}
+                    onClick={async () => {
+                      setSelectedClientId(c.userId);
+                      await loadClientAppointments(c.userId);
+                    }}
+                    className={[
+                      "w-full text-left rounded-lg border p-3 transition",
+                      selectedClientId === c.userId
+                        ? "border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-700"
+                        : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900",
+                    ].join(" ")}
+                  >
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                      {c.name || c.email || "Cliente"}
+                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{c.email || "-"}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">Tel: {c.phone || "-"}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      {c.totalAppointments} atendimento(s) • Último: {c.lastAppointmentDate || "-"}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+            {!selectedClient ? (
+              <p className="text-gray-600 dark:text-gray-400">
+                Selecione um cliente para ver os agendamentos.
+              </p>
+            ) : loadingClientAppointments ? (
+              <p className="text-gray-600 dark:text-gray-400">Carregando agendamentos...</p>
+            ) : (
+              <div>
+                <h3 className="font-bold text-gray-900 dark:text-gray-100">
+                  {selectedClient.name || selectedClient.email}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300">{selectedClient.email || "-"}</p>
+                <p className="text-sm text-gray-600 dark:text-gray-300">Tel: {selectedClient.phone || "-"}</p>
+
+                <div className="mt-4 space-y-3 max-h-[420px] overflow-auto pr-1">
+                  {clientAppointments.length === 0 ? (
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Sem agendamentos.</p>
+                  ) : (
+                    clientAppointments.map((a) => (
+                      <article
+                        key={a.id}
+                        className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800"
+                      >
+                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                          <strong>{a.date}</strong> às <strong>{a.time}</strong> • {formatDuration(a.totalDuration)}
+                        </p>
+                        <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                          {a.items.map((it, idx) => (
+                            <li key={`${a.id}-${it.serviceId}-${idx}`}>
+                              {it.qty}x {it.serviceName} ({it.duration}min)
+                            </li>
+                          ))}
+                        </ul>
+                        {a.notes && (
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Obs: {a.notes}</p>
+                        )}
+                      </article>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+      <Header showCart={false} onCartClick={() => navigate("/agendar")} />
+
+      <main className="container mx-auto px-6 pt-24 pb-10 space-y-8">
+        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Painel do Administrador</h1>
+          <p className="mt-2 text-gray-700 dark:text-gray-300">
+            Barbeiro responsável: <span className="font-semibold">{barberName}</span>
+          </p>
+          {globalError && <p className="mt-3 text-sm text-red-600">{globalError}</p>}
+        </section>
+
+        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setTab("agenda")}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                tab === "agenda"
+                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Agenda
+            </button>
+            <button
+              onClick={() => setTab("historico")}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                tab === "historico"
+                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Histórico
+            </button>
+            <button
+              onClick={() => setTab("clientes")}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
+                tab === "clientes"
+                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
+                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+              }`}
+            >
+              Clientes
+            </button>
+          </div>
+        </section>
+
+        {tab === "agenda" && renderAgenda()}
+        {tab === "historico" && renderHistorico()}
+        {tab === "clientes" && renderClientes()}
+      </main>
+    </div>
+  );
+}
