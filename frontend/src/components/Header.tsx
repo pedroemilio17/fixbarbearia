@@ -1,5 +1,19 @@
-import { useState } from "react";
-import { Menu, X, Moon, Sun, ShoppingCart, LogOut, Shield } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  Menu,
+  X,
+  Moon,
+  Sun,
+  ShoppingCart,
+  LogOut,
+  Shield,
+  User,
+  Scissors,
+  Info,
+  Phone,
+  LogIn,
+  UserPlus,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../context/ThemeContext";
 import { useCart } from "../context/CartContext";
@@ -11,210 +25,231 @@ interface HeaderProps {
 }
 
 export default function Header({ onCartClick, showCart = true }: HeaderProps) {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
   const { getCartCount } = useCart();
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
 
+  const cartCount = getCartCount();
+  const hasCartItems = cartCount > 0;
+
+  const menuItems = useMemo(
+    () => [
+      { id: "services", label: "Serviços", icon: Scissors },
+      { id: "about", label: "Sobre", icon: Info },
+      { id: "contact", label: "Contato", icon: Phone },
+    ],
+    []
+  );
+
+  const closeMenu = () => setIsMenuOpen(false);
+
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
+
     if (!element) {
+      sessionStorage.setItem("fix_scroll_target", id);
       navigate("/");
-      setIsMobileMenuOpen(false);
+      closeMenu();
       return;
     }
+
     element.scrollIntoView({ behavior: "smooth" });
-    setIsMobileMenuOpen(false);
+    closeMenu();
   };
 
   const goToLogin = (mode: "login" | "signup") => {
     navigate(`/login?mode=${mode}`);
-    setIsMobileMenuOpen(false);
+    closeMenu();
   };
 
-  const cartCount = getCartCount();
+  const handleCart = () => {
+    if (!showCart) return;
+    if (onCartClick) {
+      onCartClick();
+    } else {
+      navigate("/agendar");
+    }
+    closeMenu();
+  };
+
+  const handleProfile = () => {
+    navigate("/perfil");
+    closeMenu();
+  };
+
+  const handleAdmin = () => {
+    navigate("/admin");
+    closeMenu();
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    closeMenu();
+    navigate("/");
+  };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
-      <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-        <button
-          onClick={() => scrollToSection("hero")}
-          className="flex items-center gap-2 group"
-        >
-          <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-            <svg
-              className="w-6 h-6 text-white dark:text-gray-900"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-            >
-              <path d="M7 3h10v2H7V3zm0 16h10v2H7v-2zm6-12c-2.21 0-4 1.79-4 4 0 1.86 1.27 3.43 3 3.87V19h2v-4.13c1.73-.44 3-2.01 3-3.87 0-2.21-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-7 0H4v2h2v-2zm14 0v2h2v-2h-2zM3 9h2v2H3V9zm16 0h2v2h-2V9z" />
-            </svg>
-          </div>
-          <span className="text-xl font-bold text-gray-900 dark:text-gray-100">
-            FIX
-          </span>
-        </button>
-
-        <nav className="hidden md:flex items-center gap-8">
+    <>
+      <header className="fixed top-0 left-0 right-0 z-40 bg-white/80 dark:bg-gray-950/80 backdrop-blur-md border-b border-gray-200/70 dark:border-gray-800/70">
+        <div className="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <button
-            onClick={() => scrollToSection("services")}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors font-medium"
+            onClick={() => scrollToSection("hero")}
+            className="flex items-center justify-center rounded-xl p-1.5 hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-colors"
+            aria-label="Ir para início"
           >
-            Serviços
-          </button>
-          <button
-            onClick={() => scrollToSection("about")}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors font-medium"
-          >
-            Sobre
-          </button>
-          <button
-            onClick={() => scrollToSection("contact")}
-            className="text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors font-medium"
-          >
-            Contato
-          </button>
-        </nav>
-
-        <div className="flex items-center gap-3">
-          {showCart && onCartClick && (
-            <button
-              onClick={onCartClick}
-              className="relative p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              aria-label="Abrir carrinho"
-            >
-              <ShoppingCart className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-              {cartCount > 0 && (
-                <span className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartCount}
-                </span>
-              )}
-            </button>
-          )}
-
-          {user && role === "admin" && (
-            <button
-              onClick={() => navigate("/admin")}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-semibold"
-            >
-              <Shield className="h-4 w-4" />
-              Admin
-            </button>
-          )}
-
-          {!user ? (
-            <>
-              <button
-                onClick={() => goToLogin("login")}
-                className="inline-flex px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-semibold"
+            <div className="w-10 h-10 bg-gradient-to-br from-gray-900 to-gray-700 dark:from-gray-100 dark:to-gray-300 rounded-lg flex items-center justify-center">
+              <svg
+                className="w-6 h-6 text-white dark:text-gray-900"
+                viewBox="0 0 24 24"
+                fill="currentColor"
               >
-                Entrar
-              </button>
-              <button
-                onClick={() => goToLogin("signup")}
-                className="inline-flex px-4 py-2 rounded-lg bg-amber-400 text-gray-900 hover:bg-amber-300 transition-colors text-sm font-bold shadow-sm"
-              >
-                Cadastrar
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={signOut}
-              className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-sm font-semibold"
-            >
-              <LogOut className="h-4 w-4" />
-              Sair
-            </button>
-          )}
+                <path d="M7 3h10v2H7V3zm0 16h10v2H7v-2zm6-12c-2.21 0-4 1.79-4 4 0 1.86 1.27 3.43 3 3.87V19h2v-4.13c1.73-.44 3-2.01 3-3.87 0-2.21-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-7 0H4v2h2v-2zm14 0v2h2v-2h-2zM3 9h2v2H3V9zm16 0h2v2h-2V9z" />
+              </svg>
+            </div>
+          </button>
 
           <button
-            onClick={toggleTheme}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Alternar tema"
+            onClick={() => setIsMenuOpen((v) => !v)}
+            className="relative p-2 rounded-xl hover:bg-gray-100/80 dark:hover:bg-gray-800/80 transition-colors"
+            aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
           >
-            {theme === "light" ? (
-              <Moon className="h-6 w-6 text-gray-700 dark:text-gray-300" />
-            ) : (
-              <Sun className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            {hasCartItems && showCart && (
+              <span className="absolute -top-0.5 -right-0.5 min-w-5 h-5 px-1 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full flex items-center justify-center">
+                {cartCount > 99 ? "99+" : cartCount}
+              </span>
             )}
-          </button>
-
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-            aria-label="Abrir menu"
-          >
-            {isMobileMenuOpen ? (
-              <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+            {isMenuOpen ? (
+              <X className="h-6 w-6 text-gray-700 dark:text-gray-200" />
             ) : (
-              <Menu className="h-6 w-6 text-gray-700 dark:text-gray-300" />
+              <Menu className="h-6 w-6 text-gray-700 dark:text-gray-200" />
             )}
           </button>
         </div>
-      </div>
+      </header>
 
-      {isMobileMenuOpen && (
-        <nav className="md:hidden bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
-          <div className="container mx-auto px-6 py-4 flex flex-col gap-4">
-            <button
-              onClick={() => scrollToSection("services")}
-              className="text-left text-gray-700 dark:text-gray-300 font-medium"
-            >
-              Serviços
-            </button>
-            <button
-              onClick={() => scrollToSection("about")}
-              className="text-left text-gray-700 dark:text-gray-300 font-medium"
-            >
-              Sobre
-            </button>
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="text-left text-gray-700 dark:text-gray-300 font-medium"
-            >
-              Contato
-            </button>
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50">
+          <button
+            type="button"
+            className="absolute inset-0 bg-gray-950/25 backdrop-blur-sm"
+            onClick={closeMenu}
+            aria-label="Fechar menu"
+          />
 
-            {user && role === "admin" && (
+          <aside className="absolute top-0 right-0 h-full w-full max-w-sm bg-white/92 dark:bg-gray-900/92 backdrop-blur-xl border-l border-gray-200 dark:border-gray-800 shadow-2xl">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                Opções
+              </p>
               <button
-                onClick={() => {
-                  navigate("/admin");
-                  setIsMobileMenuOpen(false);
-                }}
-                className="text-left text-gray-700 dark:text-gray-300 font-semibold"
+                onClick={closeMenu}
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                aria-label="Fechar"
               >
-                Admin
+                <X className="h-5 w-5 text-gray-700 dark:text-gray-200" />
               </button>
-            )}
+            </div>
 
-            {!user ? (
-              <div className="pt-2 flex items-center gap-3">
+            <div className="p-4 space-y-5 overflow-y-auto h-[calc(100%-65px)]">
+              <div className="space-y-2">
+                {menuItems.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => scrollToSection(id)}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="font-medium">{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2">
+                {showCart && (
+                  <button
+                    onClick={handleCart}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <ShoppingCart className="h-4 w-4" />
+                      <span className="font-medium">Carrinho</span>
+                    </span>
+                    <span className="text-xs font-semibold rounded-full px-2 py-0.5 bg-gray-200 dark:bg-gray-700">
+                      {cartCount}
+                    </span>
+                  </button>
+                )}
+
                 <button
-                  onClick={() => goToLogin("login")}
-                  className="flex-1 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm font-semibold"
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  Entrar
-                </button>
-                <button
-                  onClick={() => goToLogin("signup")}
-                  className="flex-1 px-4 py-2 rounded-lg bg-amber-400 text-gray-900 text-sm font-bold"
-                >
-                  Cadastrar
+                  {theme === "light" ? (
+                    <Moon className="h-4 w-4" />
+                  ) : (
+                    <Sun className="h-4 w-4" />
+                  )}
+                  <span className="font-medium">
+                    {theme === "light" ? "Tema escuro" : "Tema claro"}
+                  </span>
                 </button>
               </div>
-            ) : (
-              <button
-                onClick={signOut}
-                className="mt-2 inline-flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 text-sm font-semibold"
-              >
-                <LogOut className="h-4 w-4" />
-                Sair
-              </button>
-            )}
-          </div>
-        </nav>
+
+              <div className="border-t border-gray-200 dark:border-gray-800 pt-4 space-y-2">
+                {user ? (
+                  <>
+                    <button
+                      onClick={handleProfile}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <User className="h-4 w-4" />
+                      <span className="font-medium">Perfil</span>
+                    </button>
+
+                    {role === "admin" && (
+                      <button
+                        onClick={handleAdmin}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                      >
+                        <Shield className="h-4 w-4" />
+                        <span className="font-medium">Admin</span>
+                      </button>
+                    )}
+
+                    <button
+                      onClick={handleSignOut}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" />
+                      <span className="font-semibold">Sair</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => goToLogin("login")}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    >
+                      <LogIn className="h-4 w-4" />
+                      <span className="font-medium">Entrar</span>
+                    </button>
+
+                    <button
+                      onClick={() => goToLogin("signup")}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left bg-amber-400/90 text-gray-900 hover:bg-amber-300 transition-colors"
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      <span className="font-semibold">Cadastrar</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
       )}
-    </header>
+    </>
   );
 }

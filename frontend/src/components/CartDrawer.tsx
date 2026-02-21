@@ -56,6 +56,15 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const BOOKING_DRAFT_KEY = "fix_booking_draft";
 
   useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
+  useEffect(() => {
     try {
       const raw = sessionStorage.getItem(BOOKING_DRAFT_KEY);
       if (!raw) return;
@@ -245,12 +254,12 @@ useEffect(() => {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div
-        className="absolute inset-0 bg-black/50 dark:bg-black/70 transition-opacity"
+        className="absolute inset-0 bg-slate-950/20 dark:bg-black/25 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative ml-auto w-full max-w-md h-full bg-white dark:bg-gray-800 shadow-lg flex flex-col overflow-hidden">
-        <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
+      <div className="relative ml-auto w-full max-w-md h-full bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border-l border-white/40 dark:border-gray-700/60 shadow-2xl flex flex-col overflow-hidden">
+        <div className="sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-700/80 p-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
             Carrinho
           </h2>
@@ -480,7 +489,7 @@ useEffect(() => {
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4">
+            <div className="sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-700/80 p-4">
               <div className="flex justify-between items-center mb-4">
                 <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   Total:

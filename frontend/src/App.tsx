@@ -7,7 +7,9 @@ import Home from "./pages/Home";
 import Login from "./pages/Login";
 import Booking from "./pages/Booking";
 import Admin from "./pages/Admin";
+import Profile from "./pages/Profile";
 import RequireAdmin from "./auth/RequireAdmin";
+import RequireAuth from "./auth/RequireAuth";
 
 function App() {
   return (
@@ -19,6 +21,15 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<Login />} />
               <Route path="/agendar" element={<Booking />} />
+
+              <Route
+                path="/perfil"
+                element={
+                  <RequireAuth>
+                    <Profile />
+                  </RequireAuth>
+                }
+              />
 
               <Route
                 path="/admin"

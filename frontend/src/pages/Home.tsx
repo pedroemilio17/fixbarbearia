@@ -5,14 +5,13 @@ import Hero from "../components/Hero";
 import ServiceGrid from "../components/ServiceGrid";
 import ServiceModal from "../components/ServiceModal";
 import Footer from "../components/Footer";
+import CartDrawer from "../components/CartDrawer";
 import { getServices } from "../services/servicesApi";
-import { useNavigate } from "react-router-dom";
-
 
 export default function Home() {
-  const navigate = useNavigate();
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
 
   const [services, setServices] = useState<Service[]>([]);
   const [loadingServices, setLoadingServices] = useState(true);
@@ -44,6 +43,22 @@ export default function Home() {
     };
   }, []);
 
+  useEffect(() => {
+    const target = sessionStorage.getItem("fix_scroll_target");
+    if (!target) return;
+
+    const run = () => {
+      const element = document.getElementById(target);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+        sessionStorage.removeItem("fix_scroll_target");
+      }
+    };
+
+    const timer = window.setTimeout(run, 100);
+    return () => window.clearTimeout(timer);
+  }, []);
+
   const handleServiceSelect = (service: Service) => {
     setSelectedService(service);
     setIsModalOpen(true);
@@ -63,7 +78,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
-      <Header onCartClick={() => navigate("/agendar")} />
+      <Header onCartClick={() => setIsCartOpen(true)} />
 
       <Hero onServicesClick={scrollToServices} />
 
@@ -171,7 +186,7 @@ export default function Home() {
       </section>
 
       <ServiceModal service={selectedService} isOpen={isModalOpen} onClose={handleCloseModal} />
-
+      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
       <Footer />
     </div>
