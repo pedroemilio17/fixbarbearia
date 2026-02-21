@@ -70,6 +70,8 @@ export default function Admin() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
+  const [editStatus, setEditStatus] = useState<"aguardando" | "concluido">("aguardando");
+  const [editAdminNotes, setEditAdminNotes] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -183,6 +185,8 @@ export default function Admin() {
     setEditingId(appt.id);
     setEditDate(appt.date);
     setEditTime(appt.time);
+    setEditStatus(appt.status || "aguardando");
+    setEditAdminNotes(appt.adminNotes || "");
   }
 
   async function saveEdit() {
@@ -195,6 +199,8 @@ export default function Admin() {
       await updateAdminAppointment(editingId, {
         date: editDate,
         time: editTime,
+        status: editStatus,
+        adminNotes: editAdminNotes,
       });
 
       setEditingId(null);
@@ -285,6 +291,10 @@ export default function Admin() {
                         <p className="font-semibold text-gray-900 dark:text-gray-100">
                           {formatDuration(appt.totalDuration)}
                         </p>
+                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Status</p>
+                        <span className={["inline-flex mt-1 rounded-full px-2 py-1 text-xs font-bold", appt.status === "concluido" ? "bg-emerald-600 text-white" : "bg-amber-500 text-gray-900"].join(" ")}>
+                          {appt.status === "concluido" ? "Concluído" : "Aguardando"}
+                        </span>
                       </div>
                     </div>
 
@@ -301,7 +311,13 @@ export default function Admin() {
 
                     {appt.notes && (
                       <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
-                        Observações: {appt.notes}
+                        Observações do cliente: {appt.notes}
+                      </p>
+                    )}
+
+                    {appt.adminNotes && (
+                      <p className="mt-2 text-sm text-blue-700 dark:text-blue-300">
+                        Anotações internas: {appt.adminNotes}
                       </p>
                     )}
 
@@ -310,7 +326,14 @@ export default function Admin() {
                         onClick={() => openEdit(appt)}
                         className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
                       >
-                        Alterar horário
+                        Editar agendamento
+                      </button>
+
+                      <button
+                        onClick={() => openEdit(appt)}
+                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      >
+                        Anotações internas
                       </button>
 
                       <button
@@ -325,7 +348,7 @@ export default function Admin() {
                     {editingId === appt.id && (
                       <div className="mt-4 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
                         <p className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">Editar agendamento</p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                           <input
                             type="date"
                             value={editDate}
@@ -337,6 +360,29 @@ export default function Admin() {
                             value={editTime}
                             onChange={(e) => setEditTime(e.target.value)}
                             className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                          />
+                          <select
+                            value={editStatus}
+                            onChange={(e) => setEditStatus(e.target.value as "aguardando" | "concluido")}
+                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                          >
+                            <option value="aguardando">Aguardando</option>
+                            <option value="concluido">Concluído</option>
+                          </select>
+                          <input
+                            value={appt.paymentMethod === "presencial" ? "Pagamento: presencial" : "Pagamento: online"}
+                            readOnly
+                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm opacity-80"
+                          />
+                        </div>
+                        <div className="mt-3">
+                          <label className="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">Anotações internas (mudança de pagamento/corte, etc.)</label>
+                          <textarea
+                            value={editAdminNotes}
+                            onChange={(e) => setEditAdminNotes(e.target.value)}
+                            rows={3}
+                            placeholder="Ex.: cliente trocou corte para degradê e pagará no local"
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
                           />
                         </div>
                         <div className="mt-3 flex gap-2">
@@ -399,19 +445,18 @@ export default function Admin() {
                       key={date}
                       onClick={() => setSelectedDate(date)}
                       className={[
-                        "h-20 rounded-lg border p-2 text-left transition",
+                        "h-16 sm:h-20 rounded-lg border p-2 text-left transition",
                         selected
                           ? "border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-700"
                           : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700",
                       ].join(" ")}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-start">
                         <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{day}</span>
-                        <span className="text-xs text-gray-600 dark:text-gray-300">{count}</span>
                       </div>
-                      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                        {count === 1 ? "1 atendimento" : `${count} atendimentos`}
-                      </p>
+                      <div className="mt-2 text-center">
+                        <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200">{count}</span>
+                      </div>
                     </button>
                   );
                 })}

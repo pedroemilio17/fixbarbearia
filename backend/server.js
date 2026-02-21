@@ -76,6 +76,15 @@ function normalizeNotes(notes) {
   return typeof notes === "string" && notes.trim() ? notes.trim() : null;
 }
 
+function normalizeAdminStatus(status) {
+  if (status == null) return null;
+  const v = String(status).trim().toLowerCase();
+  if (v === "aguardando" || v === "concluido" || v === "concluído") {
+    return v === "concluído" ? "concluido" : v;
+  }
+  return null;
+}
+
 function monthRange(month) {
   const [year, monthNum] = month.split("-").map(Number);
   const lastDay = new Date(Date.UTC(year, monthNum, 0)).getUTCDate();
@@ -238,7 +247,7 @@ async function getClientMap(userIds) {
 async function getAppointmentSnapshot(appointmentId) {
   const { data: appt, error: apptErr } = await supabase
     .from("appointments")
-    .select("id, user_id, date, time, payment_method, notes, created_at")
+    .select("id, user_id, date, time, payment_method, notes, status, admin_notes, created_at")
     .eq("id", appointmentId)
     .single();
 
@@ -298,6 +307,8 @@ async function getAppointmentSnapshot(appointmentId) {
     time: appt.time,
     paymentMethod: appt.payment_method,
     notes: appt.notes,
+    status: appt.status || "aguardando",
+    adminNotes: appt.admin_notes || null,
     createdAt: appt.created_at,
     client,
     items: parsedItems,
@@ -339,7 +350,7 @@ async function writeAdminAudit({
 async function buildAdminScheduleForDate(date) {
   const { data: appointments, error: apptErr } = await supabase
     .from("appointments")
-    .select("id, user_id, date, time, payment_method, notes, created_at")
+    .select("id, user_id, date, time, payment_method, notes, status, admin_notes, created_at")
     .eq("date", date)
     .order("time", { ascending: true });
 
@@ -416,6 +427,8 @@ async function buildAdminScheduleForDate(date) {
       time: appt.time,
       paymentMethod: appt.payment_method,
       notes: appt.notes,
+      status: appt.status || "aguardando",
+      adminNotes: appt.admin_notes || null,
       createdAt: appt.created_at,
       client,
       items,
@@ -533,8 +546,9 @@ app.post("/appointments", requireAuth, async (req, res) => {
         time,
         payment_method: paymentMethod,
         notes: normalizeNotes(notes),
+        status: "aguardando",
       })
-      .select("id, date, time, payment_method, notes, created_at")
+      .select("id, date, time, payment_method, notes, status, admin_notes, created_at")
       .single();
 
     if (apptErr) {
@@ -561,6 +575,8 @@ app.post("/appointments", requireAuth, async (req, res) => {
       time: appt.time,
       paymentMethod: appt.payment_method,
       notes: appt.notes ?? undefined,
+      status: appt.status || "aguardando",
+      adminNotes: appt.admin_notes ?? undefined,
       createdAt: appt.created_at,
       items,
     });
@@ -577,7 +593,7 @@ app.get("/my-appointments", requireAuth, async (req, res) => {
     const { data, error } = await supabase
       .from("appointments")
       .select(`
-        id, date, time, payment_method, notes, created_at,
+        id, date, time, payment_method, notes, status, admin_notes, created_at,
         appointment_items(service_id, qty)
       `)
       .eq("user_id", userId)
@@ -671,10 +687,10 @@ app.get("/admin/month-summary", requireAuth, requireAdmin, async (req, res) => {
 app.patch("/admin/appointments/:id", requireAuth, requireAdmin, async (req, res) => {
   try {
     const appointmentId = req.params.id;
-    const { date, time } = req.body || {};
+    const { date, time, status, adminNotes } = req.body || {};
 
-    if (!date && !time) {
-      return res.status(400).json({ message: "Envie ao menos 'date' ou 'time'." });
+    if (!date && !time && status === undefined && adminNotes === undefined) {
+      return res.status(400).json({ message: "Envie ao menos um campo para atualizar." });
     }
 
     if (date && !isValidDateStr(date)) {
@@ -683,6 +699,19 @@ app.patch("/admin/appointments/:id", requireAuth, requireAdmin, async (req, res)
 
     if (time && !isValidTimeStr(time)) {
       return res.status(400).json({ message: "Hora inválida (HH:mm)." });
+    }
+
+    let normalizedStatus = undefined;
+    if (status !== undefined) {
+      normalizedStatus = normalizeAdminStatus(status);
+      if (!normalizedStatus) {
+        return res.status(400).json({ message: "Status inválido. Use aguardando ou concluido." });
+      }
+    }
+
+    let normalizedAdminNotes = undefined;
+    if (adminNotes !== undefined) {
+      normalizedAdminNotes = typeof adminNotes === "string" && adminNotes.trim() ? adminNotes.trim() : null;
     }
 
     const beforeSnapshot = await getAppointmentSnapshot(appointmentId);
@@ -712,7 +741,7 @@ app.patch("/admin/appointments/:id", requireAuth, requireAdmin, async (req, res)
 
     const { error: updErr } = await supabase
       .from("appointments")
-      .update({ date: newDate, time: newTime })
+      .update({ date: newDate, time: newTime, ...(normalizedStatus !== undefined ? { status: normalizedStatus } : {}), ...(normalizedAdminNotes !== undefined ? { admin_notes: normalizedAdminNotes } : {}) })
       .eq("id", appointmentId);
 
     if (updErr) {
@@ -899,7 +928,7 @@ app.get("/admin/clients/:userId/appointments", requireAuth, requireAdmin, async 
 
     const { data: appts, error: apptErr } = await supabase
       .from("appointments")
-      .select("id, user_id, date, time, payment_method, notes, created_at")
+      .select("id, user_id, date, time, payment_method, notes, status, admin_notes, created_at")
       .eq("user_id", userId)
       .order("date", { ascending: false })
       .order("time", { ascending: false });
@@ -973,6 +1002,8 @@ app.get("/admin/clients/:userId/appointments", requireAuth, requireAdmin, async 
         time: appt.time,
         paymentMethod: appt.payment_method,
         notes: appt.notes,
+        status: appt.status || "aguardando",
+        adminNotes: appt.admin_notes || null,
         createdAt: appt.created_at,
         items: parsedItems,
         totalDuration,

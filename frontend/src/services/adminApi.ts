@@ -14,6 +14,8 @@ export type AdminAppointment = {
   date: string;
   time: string;
   notes: string | null;
+  adminNotes: string | null;
+  status: "aguardando" | "concluido";
   paymentMethod: "online" | "presencial";
   createdAt: string;
   client: {
@@ -54,6 +56,8 @@ export type AdminClientAppointment = {
   time: string;
   paymentMethod: "online" | "presencial";
   notes: string | null;
+  adminNotes: string | null;
+  status: "aguardando" | "concluido";
   createdAt: string;
   items: AdminAppointmentItem[];
   totalDuration: number;
@@ -98,7 +102,7 @@ export async function getAdminMonthSummary(month: string) {
 
 export async function updateAdminAppointment(
   id: string,
-  payload: { date?: string; time?: string }
+  payload: { date?: string; time?: string; status?: "aguardando" | "concluido"; adminNotes?: string }
 ) {
   return apiFetch(`/admin/appointments/${id}`, {
     method: "PATCH",
