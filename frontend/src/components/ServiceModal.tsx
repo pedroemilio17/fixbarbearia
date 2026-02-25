@@ -29,10 +29,10 @@ export default function ServiceModal({
         onClick={onClose}
       />
 
-      <div className="relative bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="relative bg-white/95 dark:bg-[#0c0c0f]/95 rounded-2xl border border-black/10 dark:border-white/10 max-w-2xl w-full max-h-[90vh] overflow-y-auto backdrop-blur-2xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors z-10"
+          className="absolute top-4 right-4 h-10 w-10 rounded-full border border-black/10 dark:border-white/10 hover:bg-black/5 dark:hover:bg-white/10 transition-colors z-10"
         >
           <X className="h-6 w-6 text-gray-700 dark:text-gray-300" />
         </button>
@@ -70,7 +70,7 @@ export default function ServiceModal({
             </p>
           </div>
 
-          <div className="mb-8 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+          <div className="mb-8 p-4 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/10">
             <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">
               O que inclui:
             </h3>
@@ -82,10 +82,7 @@ export default function ServiceModal({
             </ul>
           </div>
 
-          <button
-            onClick={handleAddToCart}
-            className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-3 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors font-semibold text-lg"
-          >
+          <button onClick={handleAddToCart} className="w-full btn btn-primary">
             Adicionar ao Carrinho
           </button>
         </div>
