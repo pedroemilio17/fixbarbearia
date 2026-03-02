@@ -119,7 +119,6 @@ Este projeto foi construído para resolver dores comuns de sistemas de agendamen
 
 ## 🧩 Estrutura do Projeto
 
-> Ajuste se o seu repositório tiver nomes diferentes, mas a separação é:
 
 ```bash
 /
@@ -137,5 +136,3 @@ Este projeto foi construído para resolver dores comuns de sistemas de agendamen
     ├── supabaseClient.js
     └── .env
 =======
-# fixbarbearia
->>>>>>> 5879fb43b9c13011ed489aba1114c8dc4db00af4
