@@ -127,7 +127,7 @@ export default function Header({ onCartClick, showCart = true }: HeaderProps) {
               >
                 <ShoppingCart className="h-5 w-5 text-gray-800 dark:text-gray-100 mx-auto" />
                 {hasCartItems && (
-                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-[rgb(var(--accent))] text-[rgb(var(--accent-ink))] text-[10px] font-bold rounded-full flex items-center justify-center">
+                  <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 bg-primary text-primary-foreground text-[10px] font-bold rounded-full flex items-center justify-center">
                     {cartCount > 99 ? "99+" : cartCount}
                   </span>
                 )}
@@ -270,7 +270,7 @@ export default function Header({ onCartClick, showCart = true }: HeaderProps) {
 
                     <button
                       onClick={() => goToLogin("signup")}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full text-left bg-[rgb(var(--accent))] text-[rgb(var(--accent-ink))] hover:brightness-95 transition-colors"
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-full text-left bg-primary text-primary-foreground hover:brightness-95 transition-colors"
                     >
                       <UserPlus className="h-4 w-4" />
                       <span className="font-semibold">Cadastrar</span>

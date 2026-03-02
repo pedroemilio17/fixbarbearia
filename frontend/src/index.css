@@ -1,47 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@300..800&family=Space+Grotesk:wght@400..700&display=swap");
 
 @layer base {
   html {
     scroll-behavior: smooth;
   }
 
-  body {
-    @apply antialiased;
-    font-family: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
-      sans-serif;
-    background-color: rgb(var(--surface));
-    color: rgb(var(--ink));
-  }
-
+  /*
+    Velvet theme tokens (HSL). We ALSO keep a small compatibility layer
+    with the old FIX RGB tokens so existing pages/components don't break
+    while we migrate the rest of the app.
+  */
   :root {
-    --surface: 248 246 242;
-    --surface-2: 241 238 233;
-    --ink: 17 17 17;
-    --muted: 92 101 112;
-    --accent: 214 168 96;
-    --accent-ink: 20 16 10;
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 220 70% 45%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 15% 92%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 220 70% 45%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
+    --ring: 220 70% 45%;
+
+    --radius: 0.75rem;
+
+    /* Glass + section style helpers (Velvet) */
+    --glass-bg: 220 20% 97% / 0.7;
+    --glass-border: 220 15% 88% / 0.5;
+    --section-flat: 220 50% 20%;
+    --section-flat-foreground: 0 0% 100%;
+
+    /* Compatibility tokens (RGB) - derived from Velvet palette */
+    --surface: 246 247 249;
+    --surface-2: 232 234 238;
+    --ink: 15 23 41;
+    --muted-rgb: 106 113 129;
+    --accent-rgb: 34 88 195;
+    --accent-ink: 255 255 255;
+
+    font-family: 'Inter', sans-serif;
   }
 
   .dark {
-    --surface: 12 12 14;
-    --surface-2: 20 20 24;
-    --ink: 243 244 246;
-    --muted: 156 163 175;
-    --accent: 220 178 108;
-    --accent-ink: 18 14 8;
+    --background: 225 50% 5%;
+    --foreground: 210 40% 98%;
+
+    --card: 225 40% 8%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 225 40% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 220 70% 55%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 225 30% 14%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 225 30% 14%;
+    --muted-foreground: 220 15% 60%;
+
+    --accent: 220 70% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 225 25% 16%;
+    --input: 225 25% 16%;
+    --ring: 220 70% 55%;
+
+    --glass-bg: 225 50% 8% / 0.6;
+    --glass-border: 220 40% 25% / 0.4;
+    --section-flat: 220 55% 15%;
+    --section-flat-foreground: 210 40% 98%;
+
+    /* Compatibility tokens (RGB) - derived from Velvet palette */
+    --surface: 6 10 19;
+    --surface-2: 12 16 29;
+    --ink: 248 250 252;
+    --muted-rgb: 138 148 168;
+    --accent-rgb: 60 113 221;
+    --accent-ink: 255 255 255;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Oswald', sans-serif;
   }
 }
 
 @layer components {
-  .font-display {
-    font-family: "Space Grotesk", ui-sans-serif, system-ui, -apple-system,
-      "Segoe UI", sans-serif;
+  /* Velvet helper components */
+  .glass-card {
+    @apply rounded-xl border;
+    background: hsl(var(--glass-bg));
+    border-color: hsl(var(--glass-border));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
+  .section-flat {
+    background: hsl(var(--section-flat));
+    color: hsl(var(--section-flat-foreground));
+  }
+
+  /* Legacy FIX buttons (kept temporarily so other pages don't break) */
   .btn {
     display: inline-flex;
     align-items: center;
@@ -56,8 +148,8 @@
   }
 
   .btn-primary {
-    background-color: rgb(var(--accent));
-    color: rgb(var(--accent-ink));
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
     box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.4);
   }
 
@@ -67,19 +159,34 @@
   }
 
   .btn-outline {
-    border: 1px solid rgba(0, 0, 0, 0.15);
-    color: rgb(var(--ink));
-  }
-
-  .dark .btn-outline {
-    border-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid hsl(var(--border));
+    background: transparent;
+    color: hsl(var(--foreground));
   }
 
   .btn-outline:hover {
-    background: rgba(0, 0, 0, 0.04);
+    background: hsl(var(--accent) / 0.1);
+  }
+}
+
+@layer utilities {
+  .animate-fade-up {
+    animation: fadeUp 0.6s ease-out forwards;
+    opacity: 0;
   }
 
-  .dark .btn-outline:hover {
-    background: rgba(255, 255, 255, 0.06);
+  .animate-fade-up.visible {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }

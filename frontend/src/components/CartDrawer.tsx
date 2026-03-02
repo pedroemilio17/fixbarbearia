@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { X, Trash2 } from "lucide-react";
+import { Button } from "./ui/button";
 import { useCart } from "../context/CartContext";
 import { validateBookingForm, type ValidationError } from "../utils/validation";
 import { TIME_SLOTS } from "../data/services";
@@ -22,6 +23,11 @@ function addMinutes(hhmm: string, minutes: number) {
   const hh = String(Math.floor(total / 60)).padStart(2, "0");
   const mm = String(total % 60).padStart(2, "0");
   return `${hh}:${mm}`;
+}
+
+
+function formatBRL(value: number) {
+  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
 }
 
 function expandBlocksToSlots(blocks: { time: string; totalMinutes: number }[]) {
@@ -254,20 +260,20 @@ useEffect(() => {
   return (
     <div className="fixed inset-0 z-50 flex">
       <div
-        className="absolute inset-0 bg-slate-950/20 dark:bg-black/25 backdrop-blur-md transition-opacity"
+        className="absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative ml-auto w-full max-w-md h-full bg-white/85 dark:bg-gray-900/85 backdrop-blur-xl border-l border-white/40 dark:border-gray-700/60 shadow-2xl flex flex-col overflow-hidden">
-        <div className="sticky top-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200/80 dark:border-gray-700/80 p-4 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+      <div className="relative ml-auto w-full max-w-md h-full glass-card rounded-none border-l shadow-2xl flex flex-col overflow-hidden">
+        <div className="sticky top-0 bg-background/60 backdrop-blur-md border-b border-border p-4 flex items-center justify-between">
+          <h2 className="text-xl font-display font-bold text-foreground tracking-wide">
             Carrinho
           </h2>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-gray-700 dark:text-gray-300" />
+            <X className="h-5 w-5 text-foreground/80" />
           </button>
         </div>
 
@@ -288,22 +294,22 @@ useEffect(() => {
                 />
               </svg>
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
+            <h3 className="text-lg font-display font-semibold text-foreground mb-2 tracking-wide">
               Agendamento Confirmado!
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
+            <p className="text-muted-foreground">
               Sua reserva foi criada com sucesso. Aguarde confirmação via WhatsApp.
             </p>
           </div>
         ) : items.length === 0 ? (
           <div className="flex-1 flex items-center justify-center p-6 text-center">
             <div>
-              <p className="text-gray-600 dark:text-gray-400 mb-4">
+              <p className="text-muted-foreground mb-4">
                 Seu carrinho está vazio
               </p>
               <button
                 onClick={onClose}
-                className="text-gray-900 dark:text-gray-100 font-semibold hover:underline"
+                className="text-foreground font-semibold hover:underline"
               >
                 Continuar comprando
               </button>
@@ -315,20 +321,20 @@ useEffect(() => {
               {items.map((item) => (
                 <div
                   key={item.serviceId}
-                  className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg"
+                  className="glass-card p-4 rounded-xl"
                 >
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                      <h3 className="font-display font-semibold text-foreground">
                         {item.serviceName}
                       </h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        R$ {item.price.toFixed(2)}
+                      <p className="text-sm text-muted-foreground">
+                        {formatBRL(item.price)}
                       </p>
                     </div>
                     <button
                       onClick={() => removeItem(item.serviceId)}
-                      className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-500 rounded-lg transition-colors"
+                      className="p-2 hover:bg-destructive/10 text-destructive rounded-lg transition-colors"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -339,16 +345,16 @@ useEffect(() => {
                       onClick={() =>
                         updateQuantity(item.serviceId, Math.max(1, item.quantity - 1))
                       }
-                      className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                      className="px-2 py-1 bg-secondary rounded hover:bg-secondary/80 transition-colors"
                     >
                       −
                     </button>
-                    <span className="flex-1 text-center font-semibold text-gray-900 dark:text-gray-100">
+                    <span className="flex-1 text-center font-semibold text-foreground">
                       {item.quantity}
                     </span>
                     <button
                       onClick={() => updateQuantity(item.serviceId, item.quantity + 1)}
-                      className="px-2 py-1 bg-gray-200 dark:bg-gray-600 rounded hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
+                      className="px-2 py-1 bg-secondary rounded hover:bg-secondary/80 transition-colors"
                     >
                       +
                     </button>
@@ -356,7 +362,7 @@ useEffect(() => {
                 </div>
               ))}
 
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <div className="border-t border-border pt-4 mt-4">
                 <form onSubmit={handleBooking} className="space-y-4">
                   {/* Erro de API (se existir) */}
                   {hasError("api") && (
@@ -364,7 +370,7 @@ useEffect(() => {
                   )}
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
                       Data do Agendamento
                     </label>
                     <input
@@ -372,10 +378,8 @@ useEffect(() => {
                       min={getMinDate()}
                       value={bookingDate}
                       onChange={(e) => setBookingDate(e.target.value)}
-                      className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 ${
-                        hasError("date")
-                          ? "border-red-500"
-                          : "border-gray-200 dark:border-gray-600"
+                      className={`w-full px-3 py-2 bg-background/40 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                        hasError("date") ? "border-destructive" : "border-input"
                       }`}
                     />
                     {hasError("date") && (
@@ -386,15 +390,15 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
                       Horário
                     </label>
                     <select
                       value={bookingTime}
                       onChange={(e) => setBookingTime(e.target.value)}
                       disabled={!bookingDate || loadingTimes}
-                      className={`w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 ${
-                        hasError("time") ? "border-red-500" : "border-gray-200 dark:border-gray-600"
+                      className={`w-full px-3 py-2 bg-background/40 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                        hasError("time") ? "border-destructive" : "border-input"
                       }`}
                     >
                       <option value="">
@@ -421,7 +425,7 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
                       Método de Pagamento
                     </label>
                     <div className="space-y-2">
@@ -434,7 +438,7 @@ useEffect(() => {
                           onChange={(e) => setPaymentMethod(e.target.value as PaymentUI)}
                           className="w-4 h-4"
                         />
-                        <span className="text-gray-900 dark:text-gray-100">
+                        <span className="text-foreground">
                           Pagamento Presencial
                         </span>
                       </label>
@@ -448,7 +452,7 @@ useEffect(() => {
                           onChange={(e) => setPaymentMethod(e.target.value as PaymentUI)}
                           className="w-4 h-4"
                         />
-                        <span className="text-gray-900 dark:text-gray-100">
+                        <span className="text-foreground">
                           Pagamento Online
                         </span>
                       </label>
@@ -462,7 +466,7 @@ useEffect(() => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
                       Observações (opcional)
                     </label>
                     <textarea
@@ -470,32 +474,33 @@ useEffect(() => {
                       onChange={(e) => setNotes(e.target.value)}
                       placeholder="Ex: Algo específico que gostaria?"
                       maxLength={500}
-                      className="w-full px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-900 dark:focus:ring-gray-100 resize-none"
+                      className="w-full px-3 py-2 bg-background/40 border border-input rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                       rows={3}
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {notes.length}/500 caracteres
                     </p>
                   </div>
 
-                  <button
+                  <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-2 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                    size="lg"
+                    className="w-full font-display tracking-wider"
                   >
                     {isSubmitting ? "Processando..." : "Confirmar Agendamento"}
-                  </button>
-                </form>
+                  </Button>
+</form>
               </div>
             </div>
 
-            <div className="sticky bottom-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-t border-gray-200/80 dark:border-gray-700/80 p-4">
+            <div className="sticky bottom-0 bg-background/60 backdrop-blur-md border-t border-border p-4">
               <div className="flex justify-between items-center mb-4">
-                <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                <span className="text-lg font-display font-semibold text-foreground tracking-wide">
                   Total:
                 </span>
-                <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  R$ {getTotal().toFixed(2)}
+                <span className="text-2xl font-display font-bold text-foreground tracking-wide">
+                  {formatBRL(getTotal())}
                 </span>
               </div>
             </div>

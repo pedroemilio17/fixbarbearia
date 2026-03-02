@@ -1,13 +1,23 @@
 import { useEffect, useState } from "react";
-import { Service } from "../types";
-import Header from "../components/Header";
-import Hero from "../components/Hero";
-import ServiceGrid from "../components/ServiceGrid";
-import ServiceModal from "../components/ServiceModal";
-import Footer from "../components/Footer";
-import CartDrawer from "../components/CartDrawer";
+import type { Service } from "../types";
 import { getServices } from "../services/servicesApi";
 
+import { Navbar } from "../components/landing/Navbar";
+import { HeroSection } from "../components/landing/HeroSection";
+import { ServicesSection } from "../components/landing/ServicesSection";
+import { PlansSection } from "../components/landing/PlansSection";
+import { AboutSection } from "../components/landing/AboutSection";
+import { ContactSection } from "../components/landing/ContactSection";
+import { Footer } from "../components/landing/Footer";
+
+import ServiceModal from "../components/ServiceModal";
+import CartDrawer from "../components/CartDrawer";
+
+/**
+ * HOME (Landing)
+ * - Visual: Velvet (typography, spacing, glass, sections).
+ * - Logic: keeps FIX backend integration (services from API + modal + cart drawer).
+ */
 export default function Home() {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,6 +27,7 @@ export default function Home() {
   const [loadingServices, setLoadingServices] = useState(true);
   const [servicesError, setServicesError] = useState<string | null>(null);
 
+  // Load services from the real backend
   useEffect(() => {
     let alive = true;
 
@@ -26,7 +37,6 @@ export default function Home() {
         setServicesError(null);
 
         const data = await getServices();
-
         if (alive) setServices(data);
       } catch (err) {
         console.error("Erro ao carregar serviços:", err);
@@ -37,12 +47,12 @@ export default function Home() {
     }
 
     loadServices();
-
     return () => {
       alive = false;
     };
   }, []);
 
+  // If user clicked a menu item in another route, we store the target and scroll after Home mounts.
   useEffect(() => {
     const target = sessionStorage.getItem("fix_scroll_target");
     if (!target) return;
@@ -55,7 +65,7 @@ export default function Home() {
       }
     };
 
-    const timer = window.setTimeout(run, 100);
+    const timer = window.setTimeout(run, 120);
     return () => window.clearTimeout(timer);
   }, []);
 
@@ -69,120 +79,23 @@ export default function Home() {
     setSelectedService(null);
   };
 
-  const scrollToServices = () => {
-    const servicesSection = document.getElementById("services");
-    if (servicesSection) {
-      servicesSection.scrollIntoView({ behavior: "smooth" });
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-[rgb(var(--surface))] transition-colors duration-300">
-      <Header onCartClick={() => setIsCartOpen(true)} />
+    <div className="min-h-screen bg-background text-foreground">
+      <Navbar onCartClick={() => setIsCartOpen(true)} />
 
-      <Hero onServicesClick={scrollToServices} />
+      {/* Landing sections */}
+      <HeroSection />
+      <ServicesSection
+        services={services}
+        loading={loadingServices}
+        error={servicesError}
+        onSelectService={handleServiceSelect}
+      />
+      <PlansSection />
+      <AboutSection />
+      <ContactSection />
 
-      <section id="services" className="min-h-screen py-20 bg-[rgb(var(--surface))]">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Nossos Serviços
-            </h2>
-            <p className="text-lg text-[rgb(var(--muted))] max-w-2xl mx-auto">
-              Uma seleção completa de grooming profissional com foco em precisão.
-            </p>
-          </div>
-
-          {loadingServices ? (
-            <p className="text-center text-[rgb(var(--muted))]">
-              Carregando serviços...
-            </p>
-          ) : servicesError ? (
-            <p className="text-center text-red-600">{servicesError}</p>
-          ) : (
-            <ServiceGrid services={services} onServiceSelect={handleServiceSelect} />
-          )}
-        </div>
-      </section>
-
-      <section id="about" className="min-h-screen py-20 bg-[rgb(var(--surface-2))]">
-        <div className="container mx-auto px-6">
-          <div className="max-w-4xl mx-auto">
-            <h2 className="font-display text-4xl md:text-5xl font-semibold text-gray-900 dark:text-gray-100 mb-8 text-center">
-              Sobre a FIX
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-              <div>
-                <p className="text-lg text-[rgb(var(--muted))] mb-6 leading-relaxed">
-                  A FIX Barbearia é resultado de uma paixão genuína pela arte do
-                  grooming clássico. Com mais de 15 anos de experiência, nossos
-                  barbeiros dominam técnicas tradicionais e contemporâneas.
-                </p>
-
-                <p className="text-lg text-[rgb(var(--muted))] mb-6 leading-relaxed">
-                  Cada cliente é tratado como um indivíduo, recebendo recomendações
-                  personalizadas e um acabamento impecável. Utilizamos apenas produtos
-                  de qualidade premium e ferramentas profissionais.
-                </p>
-
-                <p className="text-lg text-[rgb(var(--muted))] leading-relaxed">
-                  Nossa missão é oferecer uma experiência de barbershop de classe
-                  mundial, onde você se sente valorizado e sai com confiança.
-                </p>
-              </div>
-
-              <div className="rounded-3xl overflow-hidden shadow-xl h-96">
-                <img
-                  src="https://images.pexels.com/photos/1516680/pexels-photo-1516680.jpeg?auto=compress&cs=tinysrgb&w=800"
-                  alt="Barbearia"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section id="contact" className="min-h-screen py-20 bg-[rgb(var(--surface))]">
-        <div className="container mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              Entre em Contato
-            </h2>
-          </div>
-
-          <div className="max-w-3xl mx-auto divide-y divide-black/5 dark:divide-white/10 border-y border-black/5 dark:border-white/10">
-            <div className="py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <p className="text-sm uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
-                Email
-              </p>
-              <p className="text-lg text-gray-900 dark:text-gray-100">
-                contato@fixbarbearia.com
-              </p>
-            </div>
-
-            <div className="py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <p className="text-sm uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
-                Telefone
-              </p>
-              <p className="text-lg text-gray-900 dark:text-gray-100">
-                +55 (65) 9690-3121
-              </p>
-            </div>
-
-            <div className="py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <p className="text-sm uppercase tracking-[0.3em] text-gray-500 dark:text-gray-400">
-                Localização
-              </p>
-              <p className="text-lg text-gray-900 dark:text-gray-100">
-                Av. Paulista, 1000 — São Paulo, SP
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {/* FIX flows */}
       <ServiceModal service={selectedService} isOpen={isModalOpen} onClose={handleCloseModal} />
       <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 

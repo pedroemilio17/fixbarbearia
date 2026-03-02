@@ -12,7 +12,7 @@ export default function Hero({ onServicesClick }: HeroProps) {
   return (
     <section
       id="hero"
-      className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden bg-[rgb(var(--surface))]"
+      className="relative min-h-screen flex items-center justify-center pt-24 overflow-hidden bg-background"
     >
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-24 -right-20 h-72 w-72 rounded-full bg-[rgba(214,168,96,0.18)] blur-3xl" />
@@ -25,9 +25,9 @@ export default function Hero({ onServicesClick }: HeroProps) {
         </p>
         <h1 className="font-display text-5xl md:text-7xl font-semibold text-gray-900 dark:text-gray-100 mb-6 leading-tight">
           <span className="block">FIX Barber</span>
-          <span className="block text-[rgb(var(--accent))]">Studio</span>
+          <span className="block text-primary">Studio</span>
         </h1>
-        <p className="text-lg md:text-2xl text-[rgb(var(--muted))] max-w-2xl mx-auto mb-10">
+        <p className="text-lg md:text-2xl text-muted-foreground max-w-2xl mx-auto mb-10">
           Experiência contemporânea em grooming clássico, com precisão e cuidado
           em cada detalhe.
         </p>
