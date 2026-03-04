@@ -30,10 +30,10 @@ export default function Login() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
+
   const [isResetOpen, setIsResetOpen] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
-
 
   useEffect(() => {
     if (!loading && user) navigate(from, { replace: true });
@@ -43,6 +43,8 @@ export default function Login() {
     setMode(next);
     setError("");
     setInfo("");
+    setIsResetOpen(false);
+    setResetEmail("");
     setSearchParams({ mode: next });
   };
 
@@ -72,6 +74,8 @@ export default function Login() {
       setInfo("Enviamos um link para redefinir a senha. Após alterar, você volta direto para o site.");
       setIsResetOpen(false);
       setResetEmail("");
+    } catch (err: any) {
+      setError(err?.message || "Erro inesperado.");
     } finally {
       setResetBusy(false);
     }
@@ -84,25 +88,42 @@ export default function Login() {
     setInfo("");
 
     try {
-      if (!email.trim() || !password.trim()) return setError("Informe e-mail e senha.");
+      if (!email.trim() || !password.trim()) {
+        setError("Informe e-mail e senha.");
+        return;
+      }
 
       if (mode === "signup") {
-        if (!phone.trim()) return setError("Informe seu telefone.");
+        if (!phone.trim()) {
+          setError("Informe seu telefone.");
+          return;
+        }
+
+        const safeEmail = email.trim();
+        const safePassword = password.trim();
+        const safePhone = normalizePhone(phone);
 
         const { data, error: signUpErr } = await supabase.auth.signUp({
-          email: email.trim(),
-          password: password.trim(),
+          email: safeEmail,
+          password: safePassword,
           options: {
             data: {
-              phone: normalizePhone(phone),
-              name: email.trim().split("@")[0],
-              full_name: email.trim().split("@")[0],
+              phone: safePhone,
+              name: safeEmail.split("@")[0],
+              full_name: safeEmail.split("@")[0],
             },
           },
         });
 
-        if (signUpErr) return setError(signUpErr.message);
-        if (!data.session) return setInfo("Cadastro criado. Verifique seu e-mail para confirmar a conta.");
+        if (signUpErr) {
+          setError(signUpErr.message);
+          return;
+        }
+
+        if (!data.session) {
+          setInfo("Cadastro criado. Verifique seu e-mail para confirmar a conta.");
+          return;
+        }
 
         await refreshRole();
         navigate(from, { replace: true });
@@ -114,7 +135,11 @@ export default function Login() {
         password: password.trim(),
       });
 
-      if (signInErr) return setError(signInErr.message);
+      if (signInErr) {
+        setError(signInErr.message);
+        return;
+      }
+
       await refreshRole();
       navigate(from, { replace: true });
     } catch (err: any) {
@@ -145,19 +170,40 @@ export default function Login() {
         <form onSubmit={handleSubmit} className="mt-6 space-y-4">
           <div className="space-y-2">
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seuemail@dominio.com" />
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="seuemail@dominio.com"
+            />
           </div>
 
           {mode === "signup" && (
             <div className="space-y-2">
               <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" type="tel" autoComplete="tel" value={phone} onChange={(e) => setPhone(normalizePhone(e.target.value))} placeholder="+5565999999999" />
+              <Input
+                id="phone"
+                type="tel"
+                autoComplete="tel"
+                value={phone}
+                onChange={(e) => setPhone(normalizePhone(e.target.value))}
+                placeholder="+5565999999999"
+              />
             </div>
           )}
 
           <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="********" />
+            <Input
+              id="password"
+              type="password"
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="********"
+            />
           </div>
 
           {mode === "login" && (
@@ -166,6 +212,8 @@ export default function Login() {
               onClick={() => {
                 setResetEmail(email);
                 setIsResetOpen((v) => !v);
+                setError("");
+                setInfo("");
               }}
               className="text-xs text-primary underline-offset-4 hover:underline"
             >
