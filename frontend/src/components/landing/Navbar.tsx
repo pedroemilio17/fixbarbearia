@@ -60,6 +60,11 @@ function NavbarComponent({ onCartClick }: NavbarProps) {
   );
 
   return (
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/55 py-3 backdrop-blur-xl transition-all ${
+        scrolled ? "shadow-md" : ""
+      }`}
+    >
     <nav className={`fixed inset-x-0 top-0 z-50 py-4 transition-all ${scrolled ? "" : ""}`}>
       <div className="container flex items-center justify-between px-4">
         <button
