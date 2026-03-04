@@ -24,6 +24,7 @@ interface HeaderProps {
   showCart?: boolean;
 }
 
+// Shared header for internal pages with auth/cart/theme controls.
 export default function Header({ onCartClick, showCart = true }: HeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -36,9 +37,9 @@ export default function Header({ onCartClick, showCart = true }: HeaderProps) {
 
   const menuItems = useMemo(
     () => [
-      { id: "services", label: "Serviços", icon: Scissors },
-      { id: "about", label: "Sobre", icon: Info },
-      { id: "contact", label: "Contato", icon: Phone },
+      { id: "servicos", label: "Serviços", icon: Scissors },
+      { id: "sobre", label: "Sobre", icon: Info },
+      { id: "contato", label: "Contato", icon: Phone },
     ],
     []
   );

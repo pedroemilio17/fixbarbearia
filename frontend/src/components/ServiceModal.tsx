@@ -2,6 +2,9 @@ import type { Service } from "../types";
 import { X, Clock, DollarSign } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { Button } from "./ui/button";
+import { formatBRL } from "../lib/utils";
+
+// Modal presents service details and preserves add-to-cart behavior.
 
 interface ServiceModalProps {
   service: Service | null;
@@ -9,9 +12,6 @@ interface ServiceModalProps {
   onClose: () => void;
 }
 
-function formatBRL(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
 
 export default function ServiceModal({ service, isOpen, onClose }: ServiceModalProps) {
   const { addItem } = useCart();

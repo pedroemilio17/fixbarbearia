@@ -80,7 +80,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/40 text-foreground">
       <Navbar onCartClick={() => setIsCartOpen(true)} />
 
       {/* Landing sections */}
