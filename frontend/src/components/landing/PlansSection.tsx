@@ -2,6 +2,7 @@ import { Check } from "lucide-react";
 import { Button } from "../ui/button";
 import { useScrollAnimation } from "../../hooks/useScrollAnimation";
 
+// Premium dark plans section to keep contrast and hierarchy.
 const plans = [
   {
     name: "Básico",
@@ -30,49 +31,43 @@ export function PlansSection() {
   const { ref, isVisible } = useScrollAnimation();
 
   return (
-    <section id="planos" className="relative py-20 md:py-28 section-flat">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-14">
-          <p className="tracking-[0.3em] uppercase text-sm mb-3 font-display text-primary">Assine e economize</p>
-          <h2 className="font-display text-4xl md:text-5xl font-bold">PLANOS DE ASSINATURA</h2>
+    <section id="planos" className="dark section-flat py-20 md:py-24">
+      <div className="container px-4">
+        <div className="mb-12 text-center">
+          <p className="font-display text-sm uppercase tracking-[0.3em] text-blue-300">Assine e economize</p>
+          <h2 className="mt-3 font-display text-4xl text-white md:text-5xl">PLANOS DE ASSINATURA</h2>
         </div>
 
         <div
           ref={ref}
-          className={`grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto transition-all duration-700 ${
+          className={`mx-auto grid max-w-5xl gap-6 md:grid-cols-3 transition-all duration-700 ${
             isVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
           }`}
         >
-          {plans.map((plan, i) => (
-            <div
+          {plans.map((plan) => (
+            <article
               key={plan.name}
-              className={`glass-card p-8 flex flex-col relative group hover:scale-[1.03] transition-transform duration-300 ${
-                plan.highlight ? "ring-2 ring-primary" : ""
-              }`}
-              style={{ transitionDelay: `${i * 100}ms` }}
+              className={`glass-card p-7 ${plan.highlight ? "border-blue-300/50 bg-blue-900/20" : ""}`}
             >
-              {plan.highlight && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-display tracking-wider px-4 py-1 rounded-full">
-                  MAIS POPULAR
-                </span>
-              )}
-              <h3 className="font-display text-xl font-bold mb-2">{plan.name}</h3>
-              <div className="mb-6">
-                <span className="font-display text-4xl font-bold text-primary">{plan.price}</span>
-                <span className="text-muted-foreground text-sm">{plan.period}</span>
-              </div>
-              <ul className="flex-1 space-y-3 mb-8">
-                {plan.features.map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
-                    <Check className="w-4 h-4 text-primary flex-shrink-0" />
-                    <span>{f}</span>
+              <h3 className="font-display text-3xl text-white">{plan.name}</h3>
+              <p className="mt-3">
+                <span className="font-display text-4xl text-blue-200">{plan.price}</span>
+                <span className="text-slate-300">{plan.period}</span>
+              </p>
+
+              <ul className="mt-6 space-y-3 text-sm text-slate-200">
+                {plan.features.map((feature) => (
+                  <li key={feature} className="flex items-center gap-2">
+                    <Check className="h-4 w-4 text-blue-300" />
+                    {feature}
                   </li>
                 ))}
               </ul>
-              <Button variant={plan.highlight ? "default" : "outline"} className="w-full font-display tracking-wider">
-                Assinar
+
+              <Button className="mt-8 w-full" variant={plan.highlight ? "default" : "outline"}>
+                Escolher plano
               </Button>
-            </div>
+            </article>
           ))}
         </div>
       </div>

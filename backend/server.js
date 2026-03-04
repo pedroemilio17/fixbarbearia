@@ -76,6 +76,20 @@ function normalizeNotes(notes) {
   return typeof notes === "string" && notes.trim() ? notes.trim() : null;
 }
 
+function normalizeClientName(name) {
+  if (typeof name !== "string") return null;
+  const normalized = name.trim().replace(/\s+/g, " ");
+  if (!normalized) return null;
+  return normalized.slice(0, 120);
+}
+
+function normalizeClientPhone(phone) {
+  if (typeof phone !== "string") return null;
+  const normalized = phone.trim().replace(/[^\d+]/g, "");
+  if (!normalized) return null;
+  return normalized.slice(0, 20);
+}
+
 function normalizeAdminStatus(status) {
   if (status == null) return null;
   const v = String(status).trim().toLowerCase();
@@ -489,8 +503,11 @@ app.get("/availability", async (req, res) => {
 ========================= */
 app.post("/appointments", requireAuth, async (req, res) => {
   try {
-    let { items, date, time, paymentMethod, notes } = req.body || {};
+    let { items, date, time, paymentMethod, notes, clientName, clientPhone } = req.body || {};
     const userId = req.user.id;
+
+    const normalizedClientName = normalizeClientName(clientName);
+    const normalizedClientPhone = normalizeClientPhone(clientPhone);
 
     paymentMethod = normalizePaymentMethod(paymentMethod);
 
@@ -535,6 +552,34 @@ app.post("/appointments", requireAuth, async (req, res) => {
       const aEnd = aStart + (a.totalMinutes || 0);
       if (overlaps(reqStart, reqEnd, aStart, aEnd)) {
         return res.status(409).json({ message: "Este horário conflita com outro agendamento." });
+      }
+    }
+
+    // Keep auth metadata synced so admin schedule/clients screens always have customer identity.
+    if (normalizedClientName || normalizedClientPhone) {
+      const currentMeta = req.user.user_metadata || {};
+      const nextMeta = { ...currentMeta };
+
+      if (normalizedClientName) {
+        nextMeta.name = normalizedClientName;
+        if (!nextMeta.full_name) nextMeta.full_name = normalizedClientName;
+      }
+
+      if (normalizedClientPhone) nextMeta.phone = normalizedClientPhone;
+
+      const metaChanged =
+        nextMeta.name !== currentMeta.name ||
+        nextMeta.full_name !== currentMeta.full_name ||
+        nextMeta.phone !== currentMeta.phone;
+
+      if (metaChanged) {
+        const { error: updateMetaError } = await supabase.auth.admin.updateUserById(userId, {
+          user_metadata: nextMeta,
+        });
+
+        if (updateMetaError) {
+          console.error("POST /appointments metadata update error:", updateMetaError);
+        }
       }
     }
 

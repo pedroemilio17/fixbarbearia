@@ -8,7 +8,9 @@ import { getAvailability } from "../services/availabilityApi";
 import { useAuth } from "../auth/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { formatBRL } from "../lib/utils";
 
+// Drawer keeps booking/cart logic intact with refreshed premium styling.
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,10 +27,6 @@ function addMinutes(hhmm: string, minutes: number) {
   return `${hh}:${mm}`;
 }
 
-
-function formatBRL(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
 
 function expandBlocksToSlots(blocks: { time: string; totalMinutes: number }[]) {
   const out = new Set<string>();
@@ -52,6 +50,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
   const [bookingTime, setBookingTime] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentUI>("cash");
   const [notes, setNotes] = useState("");
+  const [clientName, setClientName] = useState("");
+  const [clientPhone, setClientPhone] = useState("");
 
   const [errors, setErrors] = useState<ValidationError[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,6 +80,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         bookingTime?: string;
         paymentMethod?: "online" | "cash";
         notes?: string;
+        clientName?: string;
+        clientPhone?: string;
       };
 
       if (draft.bookingDate) setBookingDate(draft.bookingDate);
@@ -88,6 +90,8 @@ export default function CartDrawer({ isOpen, onClose }: CartDrawerProps) {
         setPaymentMethod(draft.paymentMethod);
       }
       if (typeof draft.notes === "string") setNotes(draft.notes);
+      if (typeof draft.clientName === "string") setClientName(draft.clientName);
+      if (typeof draft.clientPhone === "string") setClientPhone(draft.clientPhone);
 
       sessionStorage.removeItem(BOOKING_DRAFT_KEY);
     } catch {
@@ -135,7 +139,15 @@ useEffect(() => {
   };
 }, [bookingDate, bookingTime]);
 
+  // Prefill contact data from auth metadata to avoid empty client records on admin screens.
+  useEffect(() => {
+    if (!isOpen || !user) return;
+    const metadata = (user.user_metadata || {}) as { name?: string; full_name?: string; phone?: string };
+    const fallbackName = user.email?.split("@")[0] || "";
 
+    if (!clientName) setClientName((metadata.full_name || metadata.name || fallbackName).trim());
+    if (!clientPhone && metadata.phone) setClientPhone(String(metadata.phone));
+  }, [isOpen, user, clientName, clientPhone]);
 
   // Base URL da API: se quiser, coloque no .env do Vite:
   // VITE_API_BASE_URL=http://localhost:3000
@@ -153,6 +165,14 @@ useEffect(() => {
     paymentMethod,
     notes
   );
+
+  if (!clientName.trim()) {
+    validationErrors.push({ field: "clientName", message: "Informe seu nome para identificação." });
+  }
+
+  if (!clientPhone.trim()) {
+    validationErrors.push({ field: "clientPhone", message: "Informe seu telefone para contato." });
+  }
 
   if (validationErrors.length > 0) {
     setErrors(validationErrors);
@@ -191,6 +211,8 @@ useEffect(() => {
       time: bookingTime,
       paymentMethod: paymentToApi(paymentMethod),
       notes: notes?.trim() ? notes.trim() : undefined,
+      clientName: clientName.trim(),
+      clientPhone: clientPhone.trim(),
     };
 
     const response = await fetch(`${API_BASE_URL}/appointments`, {
@@ -226,6 +248,8 @@ useEffect(() => {
       setBookingTime("");
       setPaymentMethod("cash");
       setNotes("");
+      setClientName("");
+      setClientPhone("");
 
       setTimeout(() => {
         setOrderCreated(false);
@@ -368,6 +392,38 @@ useEffect(() => {
                   {hasError("api") && (
                     <p className="text-red-500 text-sm">{getErrorMessage("api")}</p>
                   )}
+
+                  <div>
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
+                      Seu nome
+                    </label>
+                    <input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="Nome para identificação"
+                      className={`w-full px-3 py-2 bg-background/40 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                        hasError("clientName") ? "border-destructive" : "border-input"
+                      }`}
+                    />
+                    {hasError("clientName") && <p className="text-red-500 text-xs mt-1">{getErrorMessage("clientName")}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
+                      Telefone
+                    </label>
+                    <input
+                      type="tel"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="WhatsApp para confirmação"
+                      className={`w-full px-3 py-2 bg-background/40 border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-ring ${
+                        hasError("clientPhone") ? "border-destructive" : "border-input"
+                      }`}
+                    />
+                    {hasError("clientPhone") && <p className="text-red-500 text-xs mt-1">{getErrorMessage("clientPhone")}</p>}
+                  </div>
 
                   <div>
                     <label className="block text-sm font-display font-semibold text-foreground mb-2 tracking-wide">
