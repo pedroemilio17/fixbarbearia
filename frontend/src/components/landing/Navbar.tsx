@@ -60,9 +60,16 @@ function NavbarComponent({ onCartClick }: NavbarProps) {
   );
 
   return (
+
+    <nav
+      className={`fixed inset-x-0 top-0 z-50 border-b border-border/70 bg-background/55 backdrop-blur-xl transition-all ${
+        scrolled ? "shadow-md py-3" : "py-4"
+      }`}
+    >
+
     <nav className={`fixed inset-x-0 top-0 z-50 py-4 transition-all ${scrolled ? "" : ""}`}>
-      <div className="container flex items-center justify-between px-4">
-        <button
+<div className="container flex items-center justify-between px-4">
+  <button
           type="button"
           onClick={() => scrollToSection("hero")}
           className="font-display text-2xl font-bold tracking-wider text-foreground"

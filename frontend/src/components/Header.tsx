@@ -97,26 +97,13 @@ export default function Header({ onCartClick, showCart = true }: HeaderProps) {
         <div className="container mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <button
             onClick={() => scrollToSection("hero")}
-            className="flex items-center gap-3 group"
+            className="text-left"
             aria-label="Ir para início"
           >
-            <div className="w-11 h-11 rounded-2xl border border-black/10 dark:border-white/15 bg-white/80 dark:bg-white/10 flex items-center justify-center shadow-sm">
-              <svg
-                className="w-6 h-6 text-gray-900 dark:text-gray-100"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-              >
-                <path d="M7 3h10v2H7V3zm0 16h10v2H7v-2zm6-12c-2.21 0-4 1.79-4 4 0 1.86 1.27 3.43 3 3.87V19h2v-4.13c1.73-.44 3-2.01 3-3.87 0-2.21-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm-7 0H4v2h2v-2zm14 0v2h2v-2h-2zM3 9h2v2H3V9zm16 0h2v2h-2V9z" />
-              </svg>
-            </div>
-            <div className="text-left hidden sm:block">
-              <p className="font-display text-lg font-semibold tracking-wide text-gray-900 dark:text-gray-100">
-                FIX
-              </p>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-gray-500 dark:text-gray-400">
-                Barber Studio
-              </p>
-            </div>
+            <p className="font-display text-2xl font-bold tracking-wider text-foreground">
+              FIX<span className="text-primary">BARBEARIA</span>
+            </p>
+            <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Velvet experience</p>
           </button>
 
           <div className="flex items-center gap-2">

@@ -135,4 +135,4 @@ Este projeto foi construído para resolver dores comuns de sistemas de agendamen
     ├── server.js
     ├── supabaseClient.js
     └── .env
-=======
+```
