@@ -16,6 +16,7 @@ import {
   type AdminClientAppointment,
 } from "../services/adminApi";
 
+// Admin dashboard: same data/actions with a cleaner premium layout.
 type AdminTab = "agenda" | "historico" | "clientes";
 
 function formatDuration(totalMinutes: number) {
@@ -243,55 +244,55 @@ export default function Admin() {
 
   function renderAgenda() {
     return (
-      <>
-        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+      <section className="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
+        <section className="glass-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Agenda do dia</h2>
+            <h2 className="text-2xl font-display text-foreground">Agenda do dia</h2>
             <input
               type="date"
               value={selectedDate}
               onChange={(e) => setSelectedDate(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+              className="rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
             />
           </div>
 
           <div className="mt-5">
             {loadingDay ? (
-              <p className="text-gray-600 dark:text-gray-400">Carregando agenda...</p>
+              <p className="text-muted-foreground">Carregando agenda...</p>
             ) : dailyAppointments.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">Nenhum atendimento neste dia.</p>
+              <p className="text-muted-foreground">Nenhum atendimento neste dia.</p>
             ) : (
               <div className="space-y-4">
                 {dailyAppointments.map((appt) => (
                   <article
                     key={appt.id}
-                    className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900"
+                    className="rounded-lg border-b border-border/80 p-4 bg-transparent"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Horário</p>
-                        <p className="text-lg font-bold text-gray-900 dark:text-gray-100">{appt.time}</p>
+                        <p className="text-sm text-muted-foreground">Horário</p>
+                        <p className="text-lg font-bold text-foreground">{appt.time}</p>
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Cliente</p>
-                        <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <p className="text-sm text-muted-foreground">Cliente</p>
+                        <p className="text-sm font-semibold text-foreground">
                           {appt.client.name || appt.client.email || "Cliente"}
                         </p>
                         {appt.client.email && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{appt.client.email}</p>
+                          <p className="text-sm text-muted-foreground">{appt.client.email}</p>
                         )}
                         {appt.client.phone && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Tel: {appt.client.phone}</p>
+                          <p className="text-sm text-muted-foreground">Tel: {appt.client.phone}</p>
                         )}
                       </div>
 
                       <div>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Duração total</p>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                        <p className="text-sm text-muted-foreground">Duração total</p>
+                        <p className="font-semibold text-foreground">
                           {formatDuration(appt.totalDuration)}
                         </p>
-                        <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Status</p>
+                        <p className="mt-2 text-xs text-muted-foreground">Status</p>
                         <span className={["inline-flex mt-1 rounded-full px-2 py-1 text-xs font-bold", appt.status === "concluido" ? "bg-emerald-600 text-white" : "bg-amber-500 text-gray-900"].join(" ")}>
                           {appt.status === "concluido" ? "Concluído" : "Aguardando"}
                         </span>
@@ -299,10 +300,10 @@ export default function Admin() {
                     </div>
 
                     <div className="mt-4">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Serviços</p>
+                      <p className="text-sm font-medium text-muted-foreground mb-2">Serviços</p>
                       <ul className="space-y-1">
                         {appt.items.map((item, idx) => (
-                          <li key={`${appt.id}-${item.serviceId}-${idx}`} className="text-sm text-gray-700 dark:text-gray-300">
+                          <li key={`${appt.id}-${item.serviceId}-${idx}`} className="text-sm text-muted-foreground">
                             {item.qty}x {item.serviceName} — {item.duration}min cada
                           </li>
                         ))}
@@ -310,7 +311,7 @@ export default function Admin() {
                     </div>
 
                     {appt.notes && (
-                      <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">
+                      <p className="mt-3 text-sm text-muted-foreground">
                         Observações do cliente: {appt.notes}
                       </p>
                     )}
@@ -324,14 +325,14 @@ export default function Admin() {
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
                         onClick={() => openEdit(appt)}
-                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-input hover:bg-secondary"
                       >
                         Editar agendamento
                       </button>
 
                       <button
                         onClick={() => openEdit(appt)}
-                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+                        className="rounded-lg px-3 py-2 text-sm font-semibold border border-input hover:bg-secondary"
                       >
                         Anotações internas
                       </button>
@@ -346,25 +347,25 @@ export default function Admin() {
                     </div>
 
                     {editingId === appt.id && (
-                      <div className="mt-4 p-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800">
-                        <p className="text-sm font-semibold mb-2 text-gray-900 dark:text-gray-100">Editar agendamento</p>
+                      <div className="mt-4 p-3 rounded-lg border border-input bg-white dark:bg-gray-800">
+                        <p className="text-sm font-semibold mb-2 text-foreground">Editar agendamento</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                           <input
                             type="date"
                             value={editDate}
                             onChange={(e) => setEditDate(e.target.value)}
-                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
                           />
                           <input
                             type="time"
                             value={editTime}
                             onChange={(e) => setEditTime(e.target.value)}
-                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
                           />
                           <select
                             value={editStatus}
                             onChange={(e) => setEditStatus(e.target.value as "aguardando" | "concluido")}
-                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
                           >
                             <option value="aguardando">Aguardando</option>
                             <option value="concluido">Concluído</option>
@@ -372,7 +373,7 @@ export default function Admin() {
                           <input
                             value={appt.paymentMethod === "presencial" ? "Pagamento: presencial" : "Pagamento: online"}
                             readOnly
-                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm opacity-80"
+                            className="rounded-lg border border-input bg-secondary px-3 py-2 text-sm opacity-80"
                           />
                         </div>
                         <div className="mt-3">
@@ -382,20 +383,20 @@ export default function Admin() {
                             onChange={(e) => setEditAdminNotes(e.target.value)}
                             rows={3}
                             placeholder="Ex.: cliente trocou corte para degradê e pagará no local"
-                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
                           />
                         </div>
                         <div className="mt-3 flex gap-2">
                           <button
                             onClick={saveEdit}
                             disabled={savingEdit}
-                            className="rounded-lg px-3 py-2 text-sm font-semibold bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 disabled:opacity-60"
+                            className="rounded-lg px-3 py-2 text-sm font-semibold bg-primary text-primary-foreground disabled:opacity-60"
                           >
                             {savingEdit ? "Salvando..." : "Salvar"}
                           </button>
                           <button
                             onClick={() => setEditingId(null)}
-                            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600"
+                            className="rounded-lg px-3 py-2 text-sm font-semibold border border-input"
                           >
                             Cancelar
                           </button>
@@ -409,24 +410,24 @@ export default function Admin() {
           </div>
         </section>
 
-        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+        <section className="glass-card p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Calendário mensal</h2>
+            <h2 className="text-2xl font-display text-foreground">Calendário mensal</h2>
             <input
               type="month"
               value={selectedMonth}
               onChange={(e) => setSelectedMonth(e.target.value)}
-              className="rounded-lg border border-gray-300 dark:border-gray-600 bg-transparent px-3 py-2 text-sm"
+              className="rounded-lg border border-input bg-transparent px-3 py-2 text-sm"
             />
           </div>
 
           {loadingMonth ? (
-            <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando calendário...</p>
+            <p className="mt-4 text-muted-foreground">Carregando calendário...</p>
           ) : (
             <div className="mt-4">
               <div className="grid grid-cols-7 gap-2 mb-2">
                 {weekLabels.map((w) => (
-                  <div key={w} className="text-xs font-semibold text-gray-500 dark:text-gray-400 text-center py-1">
+                  <div key={w} className="text-xs font-semibold text-muted-foreground text-center py-1">
                     {w}
                   </div>
                 ))}
@@ -447,15 +448,15 @@ export default function Admin() {
                       className={[
                         "h-16 sm:h-20 rounded-lg border p-2 text-left transition",
                         selected
-                          ? "border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-700"
-                          : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700",
+                          ? "border-gray-900 dark:border-gray-100 bg-secondary"
+                          : "border-border hover:bg-secondary/70",
                       ].join(" ")}
                     >
                       <div className="flex items-center justify-start">
-                        <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">{day}</span>
+                        <span className="text-sm font-semibold text-foreground">{day}</span>
                       </div>
                       <div className="mt-2 text-center">
-                        <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-gray-300 dark:border-gray-600 px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200">{count}</span>
+                        <span className="inline-flex min-w-6 items-center justify-center rounded-full border border-input px-1.5 py-0.5 text-[10px] sm:text-xs font-semibold text-gray-700 dark:text-gray-200">{count}</span>
                       </div>
                     </button>
                   );
@@ -464,27 +465,27 @@ export default function Admin() {
             </div>
           )}
         </section>
-      </>
+      </section>
     );
   }
 
   function renderHistorico() {
     return (
-      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+      <section className="glass-card p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Histórico de alterações</h2>
+          <h2 className="text-2xl font-display text-foreground">Histórico de alterações</h2>
           <button
             onClick={loadLogs}
-            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="rounded-lg px-3 py-2 text-sm font-semibold border border-input hover:bg-secondary"
           >
             Atualizar
           </button>
         </div>
 
         {loadingLogs ? (
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Carregando histórico...</p>
+          <p className="mt-4 text-muted-foreground">Carregando histórico...</p>
         ) : logs.length === 0 ? (
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Sem eventos registrados.</p>
+          <p className="mt-4 text-muted-foreground">Sem eventos registrados.</p>
         ) : (
           <div className="mt-4 space-y-3">
             {logs.map((log) => {
@@ -498,7 +499,7 @@ export default function Admin() {
               return (
                 <article
                   key={log.id}
-                  className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900"
+                  className="rounded-lg border-b border-border/80 p-4 bg-transparent"
                 >
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
@@ -517,16 +518,16 @@ export default function Admin() {
                       </span>
                     </div>
 
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
+                    <p className="text-sm text-muted-foreground">
                       Barbeiro: <strong>{log.actor_name || log.actor_email}</strong>
                     </p>
                   </div>
 
                   <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <p className="text-muted-foreground">
                       Cliente: <strong>{clientName}</strong>
                     </p>
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <p className="text-muted-foreground">
                       Horário anterior:{" "}
                       <strong>
                         {before?.date || "-"} {before?.time || ""}
@@ -534,16 +535,16 @@ export default function Admin() {
                     </p>
 
                     {after ? (
-                      <p className="text-gray-700 dark:text-gray-300">
+                      <p className="text-muted-foreground">
                         Horário novo: <strong>{after?.date || "-"} {after?.time || ""}</strong>
                       </p>
                     ) : (
-                      <p className="text-gray-700 dark:text-gray-300">
+                      <p className="text-muted-foreground">
                         Horário novo: <strong>— (agendamento removido)</strong>
                       </p>
                     )}
 
-                    <p className="text-gray-700 dark:text-gray-300">
+                    <p className="text-muted-foreground">
                       Serviços: <strong>{services || "-"}</strong>
                     </p>
                   </div>
@@ -560,12 +561,12 @@ export default function Admin() {
     const selectedClient = clients.find((c) => c.userId === selectedClientId) || null;
 
     return (
-      <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
+      <section className="glass-card p-6">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">Banco de clientes</h2>
+          <h2 className="text-2xl font-display text-foreground">Banco de clientes</h2>
           <button
             onClick={loadClients}
-            className="rounded-lg px-3 py-2 text-sm font-semibold border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+            className="rounded-lg px-3 py-2 text-sm font-semibold border border-input hover:bg-secondary"
           >
             Atualizar
           </button>
@@ -574,9 +575,9 @@ export default function Admin() {
         <div className="mt-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div>
             {loadingClients ? (
-              <p className="text-gray-600 dark:text-gray-400">Carregando clientes...</p>
+              <p className="text-muted-foreground">Carregando clientes...</p>
             ) : clients.length === 0 ? (
-              <p className="text-gray-600 dark:text-gray-400">Nenhum cliente encontrado.</p>
+              <p className="text-muted-foreground">Nenhum cliente encontrado.</p>
             ) : (
               <div className="space-y-3 max-h-[520px] overflow-auto pr-1">
                 {clients.map((c) => (
@@ -589,16 +590,16 @@ export default function Admin() {
                     className={[
                       "w-full text-left rounded-lg border p-3 transition",
                       selectedClientId === c.userId
-                        ? "border-gray-900 dark:border-gray-100 bg-gray-100 dark:bg-gray-700"
-                        : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900",
+                        ? "border-gray-900 dark:border-gray-100 bg-secondary"
+                        : "border-border hover:bg-gray-50 dark:hover:bg-gray-900",
                     ].join(" ")}
                   >
-                    <p className="font-semibold text-gray-900 dark:text-gray-100">
+                    <p className="font-semibold text-foreground">
                       {c.name || c.email || "Cliente"}
                     </p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">{c.email || "-"}</p>
                     <p className="text-sm text-gray-600 dark:text-gray-300">Tel: {c.phone || "-"}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                       {c.totalAppointments} atendimento(s) • Último: {c.lastAppointmentDate || "-"}
                     </p>
                   </button>
@@ -607,16 +608,16 @@ export default function Admin() {
             )}
           </div>
 
-          <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-4 bg-gray-50 dark:bg-gray-900">
+          <div className="rounded-lg border-b border-border/80 p-4 bg-transparent">
             {!selectedClient ? (
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-muted-foreground">
                 Selecione um cliente para ver os agendamentos.
               </p>
             ) : loadingClientAppointments ? (
-              <p className="text-gray-600 dark:text-gray-400">Carregando agendamentos...</p>
+              <p className="text-muted-foreground">Carregando agendamentos...</p>
             ) : (
               <div>
-                <h3 className="font-bold text-gray-900 dark:text-gray-100">
+                <h3 className="font-bold text-foreground">
                   {selectedClient.name || selectedClient.email}
                 </h3>
                 <p className="text-sm text-gray-600 dark:text-gray-300">{selectedClient.email || "-"}</p>
@@ -624,17 +625,17 @@ export default function Admin() {
 
                 <div className="mt-4 space-y-3 max-h-[420px] overflow-auto pr-1">
                   {clientAppointments.length === 0 ? (
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Sem agendamentos.</p>
+                    <p className="text-sm text-muted-foreground">Sem agendamentos.</p>
                   ) : (
                     clientAppointments.map((a) => (
                       <article
                         key={a.id}
-                        className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 bg-white dark:bg-gray-800"
+                        className="rounded-lg border border-border p-3 bg-white dark:bg-gray-800"
                       >
-                        <p className="text-sm text-gray-700 dark:text-gray-300">
+                        <p className="text-sm text-muted-foreground">
                           <strong>{a.date}</strong> às <strong>{a.time}</strong> • {formatDuration(a.totalDuration)}
                         </p>
-                        <ul className="mt-2 text-sm text-gray-700 dark:text-gray-300 space-y-1">
+                        <ul className="mt-2 text-sm text-muted-foreground space-y-1">
                           {a.items.map((it, idx) => (
                             <li key={`${a.id}-${it.serviceId}-${idx}`}>
                               {it.qty}x {it.serviceName} ({it.duration}min)
@@ -642,7 +643,7 @@ export default function Admin() {
                           ))}
                         </ul>
                         {a.notes && (
-                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Obs: {a.notes}</p>
+                          <p className="mt-2 text-xs text-muted-foreground">Obs: {a.notes}</p>
                         )}
                       </article>
                     ))
@@ -657,26 +658,26 @@ export default function Admin() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen bg-gradient-to-b from-background to-secondary/30 transition-colors">
       <Header showCart={false} onCartClick={() => navigate("/agendar")} />
 
       <main className="container mx-auto px-6 pt-24 pb-10 space-y-8">
-        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-6">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Painel do Administrador</h1>
-          <p className="mt-2 text-gray-700 dark:text-gray-300">
+        <section className="glass-card p-6">
+          <h1 className="font-display text-4xl text-foreground">Painel do Administrador</h1>
+          <p className="mt-2 text-muted-foreground">
             Barbeiro responsável: <span className="font-semibold">{barberName}</span>
           </p>
           {globalError && <p className="mt-3 text-sm text-red-600">{globalError}</p>}
         </section>
 
-        <section className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+        <section className="glass-card p-4">
           <div className="flex flex-wrap gap-2">
             <button
               onClick={() => setTab("agenda")}
               className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
                 tab === "agenda"
-                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
-                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground border-gray-900 dark:border-gray-100"
+                  : "border-input text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               Agenda
@@ -685,8 +686,8 @@ export default function Admin() {
               onClick={() => setTab("historico")}
               className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
                 tab === "historico"
-                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
-                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground border-gray-900 dark:border-gray-100"
+                  : "border-input text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               Histórico
@@ -695,8 +696,8 @@ export default function Admin() {
               onClick={() => setTab("clientes")}
               className={`px-4 py-2 rounded-lg text-sm font-semibold border ${
                 tab === "clientes"
-                  ? "bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 border-gray-900 dark:border-gray-100"
-                  : "border-gray-300 dark:border-gray-600 text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  ? "bg-primary text-primary-foreground border-gray-900 dark:border-gray-100"
+                  : "border-input text-gray-800 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
               }`}
             >
               Clientes
