@@ -8,7 +8,9 @@ import { getAvailability } from "../services/availabilityApi";
 import { useAuth } from "../auth/AuthProvider";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
+import { formatBRL } from "../lib/utils";
 
+// Drawer keeps booking/cart logic intact with refreshed premium styling.
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -25,10 +27,6 @@ function addMinutes(hhmm: string, minutes: number) {
   return `${hh}:${mm}`;
 }
 
-
-function formatBRL(value: number) {
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
-}
 
 function expandBlocksToSlots(blocks: { time: string; totalMinutes: number }[]) {
   const out = new Set<string>();
